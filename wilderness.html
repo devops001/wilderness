@@ -24,7 +24,7 @@
     var tileSprites = [];
     var takeTurn    = false;
     var resources   = [];
-    var player;
+    var player, ui;
 
     var margin = {
       "x": (viewSize.width  - tilesInView.x*tileSize)/2,
@@ -48,13 +48,26 @@
       addResource("tree", 3);
       addResource("rock", 3);
       addResource("skull", 1);
+      addUI();
     }
     loader.load();
     var stage    = new PIXI.Stage(0x778899);
     var renderer = PIXI.autoDetectRenderer(viewSize.width,viewSize.height);
     document.body.appendChild(renderer.view);
+
+
     requestAnimFrame(animate);
 
+
+    function addUI() {
+      ui = {};
+      ui.height = 50;
+      ui.width  = 80;
+      ui.log        = new PIXI.Text("log msg", {"font":"bold 18px Monospace", "fill":"#ff5566", "align":"left"});
+      ui.log.position.x = margin.x;
+      ui.log.position.y = viewSize.height - margin.y - ui.height;
+      stage.addChild(ui.log);
+    }
 
     function addResource(name, amount) {
       while (amount>0) {
@@ -187,6 +200,7 @@
         total = drops;
       }
       sprite.data.inventory[res.data.lootName] = total;
+      ui.log.setText("you gather "+ drops +" x "+ res.data.lootName +" (total: "+ total +")");
     }
 
     function isBlocked(tileX, tileY) {
