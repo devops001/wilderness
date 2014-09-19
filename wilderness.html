@@ -2,14 +2,14 @@
 <html>
  <head>
   <meta charset="UTF-8">
-	<title>wilderness</title>
-	<style>
-		body {
-			margin: 0;
-			padding: 0;
-			background-color: #000000;
-		}
-	</style>
+  <title>wilderness</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #000000;
+    }
+  </style>
   <script src="pixi.dev.js"></script>
 </head>
 <body>
@@ -50,8 +50,8 @@
       addResource("skull", 1);
     }
     loader.load();
-  	var stage    = new PIXI.Stage(0x778899);
-  	var renderer = PIXI.autoDetectRenderer(viewSize.width,viewSize.height);
+    var stage    = new PIXI.Stage(0x778899);
+    var renderer = PIXI.autoDetectRenderer(viewSize.width,viewSize.height);
     document.body.appendChild(renderer.view);
     requestAnimFrame(animate);
 
@@ -109,10 +109,10 @@
 
     function initPlayer() {
       var pos = getCenteredTilePos(5,5);
-  	  player  = PIXI.Sprite.fromFrame("player");
-  	  player.anchor.x   = 0.5;
-  	  player.anchor.y   = 0.5;
-  	  player.position.x = pos.x;
+      player  = PIXI.Sprite.fromFrame("player");
+      player.anchor.x   = 0.5;
+      player.anchor.y   = 0.5;
+      player.position.x = pos.x;
       player.position.y = pos.y;
       stage.addChild(player);
       // attach some user data to the sprite:
@@ -121,15 +121,15 @@
       player.data.inventory = {};
     }
 
-  	function animate() {
-  	  requestAnimFrame(animate);
+    function animate() {
+      requestAnimFrame(animate);
       if (player) player.rotation += 0.1;
       if (takeTurn) {
         console.log("taking a turn...");
         takeTurn = false;
       }
-  	  renderer.render(stage);
-  	}
+      renderer.render(stage);
+    }
 
     function getCenteredTilePos(tileX, tileY) {
       var half = tileSize/2;
