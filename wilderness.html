@@ -154,7 +154,7 @@
           var res = getResource(x, y);
           if (res) {
             if (hitResource(res)) {
-              addLoot(sprite, res);
+              lootResource(sprite, res);
             }
           } else {
             console.log("can't move there.");
@@ -178,7 +178,7 @@
       return true;
     }
 
-    function addLoot(sprite, res) {
+    function lootResource(sprite, res) {
       var drops = Math.floor(Math.random()*3)+1;
       var total = sprite.data.inventory[res.data.lootName];
       if (total) {
