@@ -1,0 +1,61 @@
+{ "frames": {
+    "grass": {
+	    "frame": {"x":0,"y":0,"w":64,"h":64},
+	    "rotated": false,
+	    "trimmed": false,
+	    "spriteSourceSize": {"x":0,"y":0,"w":64,"h":64},
+	    "sourceSize": {"w":64,"h":64}
+    },
+    "rock": {
+	    "frame": {"x":64,"y":0,"w":64,"h":64},
+	    "rotated": false,
+	    "trimmed": false,
+	    "spriteSourceSize": {"x":0,"y":0,"w":64,"h":64},
+	    "sourceSize": {"w":64,"h":64}
+    },
+    "tree": {
+	    "frame": {"x":128,"y":0,"w":64,"h":64},
+    	"rotated": false,
+	    "trimmed": false,
+	    "spriteSourceSize": {"x":129,"y":0,"w":64,"h":64},
+	    "sourceSize": {"w":64,"h":64}
+    },
+    "wall": {
+    	"frame": {"x":192,"y":0,"w":64,"h":64},
+    	"rotated": false,
+	    "trimmed": false,
+	    "spriteSourceSize": {"x":193,"y":0,"w":64,"h":64},
+	    "sourceSize": {"w":64,"h":64}
+    },
+    "player": {
+    	"frame": {"x":0,"y":64,"w":64,"h":64},
+	    "rotated": false,
+	    "trimmed": false,
+	    "spriteSourceSize": {"x":0,"y":0,"w":64,"h":64},
+	    "sourceSize": {"w":64,"h":64}
+    },
+    "rat": {
+    	"frame": {"x":64,"y":64,"w":64,"h":64},
+	    "rotated": false,
+	    "trimmed": false,
+	    "spriteSourceSize": {"x":0,"y":0,"w":64,"h":64},
+	    "sourceSize": {"w":64,"h":64}
+    },
+    "skull": {
+    	"frame": {"x":128,"y":64,"w":64,"h":64},
+	    "rotated": false,
+	    "trimmed": false,
+	    "spriteSourceSize": {"x":0,"y":0,"w":64,"h":64},
+	    "sourceSize": {"w":64,"h":64}
+    }
+  },
+  "meta": {
+	  "app": "wilderness",
+	  "version": "0.1a",
+	  "image": "tiles.png",
+	  "format": "RGBA8888",
+	  "size": {"w":256,"h":256},
+	  "scale": "1",
+	  "smartupdate": "iamdumb"
+  }
+}
