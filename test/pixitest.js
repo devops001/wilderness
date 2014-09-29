@@ -2,9 +2,9 @@
 var sizes = {
   "screen" : {"x":window.innerWidth, "y":window.innerHeight},
   "map"    : {"x":64, "y":64},
-  "tile"   : {"x":64,  "y":64},
-  "rooms"  : {"x":2,   "y":2},
-  "view"   : {"x":0,   "y":0},
+  "tile"   : {"x":64, "y":64},
+  "view"   : {"x":0,  "y":0},
+  "margin" : {"x":10, "y":10},
 };
 
 sizes.view.x = Math.floor(sizes.screen.x/sizes.tile.x); 
@@ -17,12 +17,31 @@ renderer.view.style.height  = sizes.screen.y +"px";
 renderer.view.style.display = "block";
 document.body.appendChild(renderer.view);
 
-var tiles        = {};
-tiles.names      = ["grass", "rock", "tree", "wall", "player", "rat", "skull"];
-tiles.rooms      = [];
-tiles.roomSprite = new PIXI.Sprite(new PIXI.RenderTexture(sizes.screen.x, sizes.screen.y));
+var tiles    = {};
+tiles.names  = ["grass", "rock", "tree", "wall", "player", "rat", "skull"];
+tiles.rooms  = [];
+tiles.sprite = new PIXI.Sprite(new PIXI.RenderTexture(sizes.screen.x, sizes.screen.y));
 
-function createRoom(roomX, roomY) {
+var ui = {};
+
+function createUI() {
+  ui.height  = 50;
+  ui.width   = 80;
+  ui.console = new PIXI.Text("hello", {"font":"bold 18px Monospace", "fill":"#ffffff", "align":"left"});
+  ui.console.position.x = sizes.margin.x;
+  ui.console.position.y = sizes.view.y*sizes.tile.y - sizes.margin.y - ui.height;
+  stage.addChild(ui.console);
+}
+
+function showMessage(msg) {
+  ui.console.setText(msg);
+}
+
+
+
+
+
+function createRoom() {
   var room     = {};
   room.values  = [];
   room.texture = new PIXI.RenderTexture(sizes.map.x*sizes.tile.x, sizes.map.y*sizes.tile.y);
@@ -57,16 +76,12 @@ function createRoom(roomX, roomY) {
 }
 
 function createRooms() {
-  for (var y=0; y<sizes.rooms.x; y++) {
-    for (var x=0; x<sizes.rooms.y; x++) {
-      createRoom(x, y);
-    }
-  }
+  createRoom();
   tiles.currentRoom = tiles.rooms[0];
-  tiles.roomSprite.setTexture(tiles.currentRoom.texture);
-  tiles.roomSprite.position.x = 0;
-  tiles.roomSprite.position.y = 0;
-  stage.addChild(tiles.roomSprite);
+  tiles.sprite.setTexture(tiles.currentRoom.texture);
+  tiles.sprite.position.x = 0;
+  tiles.sprite.position.y = 0;
+  stage.addChild(tiles.sprite);
 }
 
 function createPlayer() {
@@ -121,9 +136,7 @@ function move(sprite, dx, dy) {
   var tilePos = getTilePos(sprite.position.x, sprite.position.y);
   var x       = tilePos.x + dx; 
   var y       = tilePos.y + dy; 
-  if (x<0 || y<0 || x>sizes.map.x-1 || y>sizes.map.y-1 || isBlocked(x,y)) {
-    console.log("is blocked", x, y);
-  } else {
+  if (! (x<0 || y<0 || x>sizes.map.x-1 || y>sizes.map.y-1 || isBlocked(x,y))) {
     var centered      = getCenteredTilePos(x, y);
     sprite.position.x = centered.x;
     sprite.position.y = centered.y;
@@ -132,19 +145,12 @@ function move(sprite, dx, dy) {
 
 function moveWorld(dx, dy) {
   var tilePos = {"x":tiles.player.tilePos.x+dx, "y":tiles.player.tilePos.y+dy};
-  if (isBlocked(tilePos.x, tilePos.y)) {
-    console.log("is blocked", tilePos.x, tilePos.y);
-  } else {
+  if (!isBlocked(tilePos.x, tilePos.y)) {
     tiles.player.tilePos = tilePos;
-    var moveX = dx * sizes.tile.x;
-    var moveY = dy * sizes.tile.y;
-    tiles.roomSprite.position.x -= moveX;
-    tiles.roomSprite.position.y -= moveY;
+    tiles.sprite.position.x -= dx * sizes.tile.x;
+    tiles.sprite.position.y -= dy * sizes.tile.y;
   }
 }
-
-
-
 
 
 
@@ -182,6 +188,7 @@ var loader = new PIXI.AssetLoader(["tiles.json"]);
 loader.onComplete = function() {
   createRooms();
   createPlayer();
+  createUI();
   animate();
 };
 loader.load();
