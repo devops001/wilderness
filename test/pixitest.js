@@ -18,19 +18,33 @@ renderer.view.style.display = "block";
 document.body.appendChild(renderer.view);
 
 var tiles    = {};
-tiles.names  = ["grass", "rock", "tree", "wall", "player", "rat", "skull"];
+tiles.names  = ["grass", "rock", "tree", "crate", "player", "rat", "skull", "cheetah"];
 tiles.rooms  = [];
 tiles.sprite = new PIXI.Sprite(new PIXI.RenderTexture(sizes.screen.x, sizes.screen.y));
 
 var ui = {};
 
 function createUI() {
-  ui.height  = 50;
-  ui.width   = 80;
+  ui.height    = 50;
+  ui.width     = 80;
+  ui.container = new PIXI.DisplayObjectContainer();
+  stage.addChild(ui.container);
+
   ui.console = new PIXI.Text("hello", {"font":"bold 18px Monospace", "fill":"#ffffff", "align":"left"});
   ui.console.position.x = sizes.margin.x;
   ui.console.position.y = sizes.view.y*sizes.tile.y - sizes.margin.y - ui.height;
-  stage.addChild(ui.console);
+  ui.container.addChild(ui.console);
+
+  ui.playerStats            = new PIXI.DisplayObjectContainer();
+  ui.playerStats.position.x = 0;
+  ui.playerStats.position.y = 0;
+  ui.container.addChild(ui.playerStats);
+
+  var playerPic        = PIXI.Sprite.fromFrame("cheetah");
+  playerPic.position.x = 0;
+  playerPic.position.y = 0;
+  ui.playerStats.addChild(playerPic);
+  
 }
 
 function showMessage(msg) {
@@ -38,22 +52,15 @@ function showMessage(msg) {
 }
 
 
-
-
-
 function createRoom() {
   var room     = {};
   room.values  = [];
   room.texture = new PIXI.RenderTexture(sizes.map.x*sizes.tile.x, sizes.map.y*sizes.tile.y);
   // set tile values:
+  var grass = tiles.names.indexOf("grass");
   for (var y=0; y<sizes.map.y; y++) {
     for (var x=0; x<sizes.map.x; x++) {
-      if (Math.random() > 0.9) {
-        value = tiles.names.indexOf("wall");
-      } else {
-        value = tiles.names.indexOf("grass");
-      }
-      room.values[x+y*sizes.map.x] = value;
+      room.values[x+y*sizes.map.x] = grass;
     }
   }
   // create sprites:
@@ -89,13 +96,8 @@ function createPlayer() {
   tiles.player.anchor.x = 0.5;
   tiles.player.anchor.y = 0.5;
   stage.addChild(tiles.player);
-
-  var blocked = true;
-  var x       = Math.floor(sizes.view.x/2);
-  var y       = Math.floor(sizes.view.y/2);
-  if (isBlocked(x, y)) {
-    unblock(x, y);
-  }
+  var x = Math.floor(sizes.view.x/2);
+  var y = Math.floor(sizes.view.y/2);
   tiles.player.tilePos    = {"x":x, "y":y};
   var screenPos           = getCenteredTilePos(x, y);
   tiles.player.position.x = screenPos.x;
@@ -108,10 +110,6 @@ function isBlocked(tileX, tileY) {
   }
   var value = tiles.currentRoom.values[tileX+tileY*sizes.map.x];
   return value != tiles.names.indexOf("grass");
-}
-
-function unblock(tileX, tileY) {
-  tiles.currentRoom.values[tileX+tileY*sizes.map.x] = tiles.names.indexOf("grass");
 }
 
 function getCenteredTilePos(tileX, tileY) {
