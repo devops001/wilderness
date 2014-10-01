@@ -1,10 +1,12 @@
 
 var sizes = {
   "screen" : {"x":window.innerWidth, "y":window.innerHeight},
-  "map"    : {"x":64, "y":64},
-  "tile"   : {"x":64, "y":64},
-  "view"   : {"x":0,  "y":0},
-  "margin" : {"x":10, "y":10},
+  "map"    : {"x":64,  "y":64},
+  "tile"   : {"x":64,  "y":64},
+  "view"   : {"x":0,   "y":0},
+  "margin" : {"x":10,  "y":10},
+  "console": {"x":50,  "y":80},
+  "bar"    : {"x":200, "y":10},
 };
 
 sizes.view.x = Math.floor(sizes.screen.x/sizes.tile.x); 
@@ -18,7 +20,7 @@ renderer.view.style.display = "block";
 document.body.appendChild(renderer.view);
 
 var tiles    = {};
-tiles.names  = ["grass", "rock", "tree", "crate", "player", "rat", "skull", "cheetah"];
+tiles.names  = ["grass", "rock", "tree", "crate", "player", "rat", "skull", "cheetah", "tree1", "tree2"];
 tiles.rooms  = [];
 tiles.sprite = new PIXI.Sprite(new PIXI.RenderTexture(sizes.screen.x, sizes.screen.y));
 
@@ -40,17 +42,42 @@ function createUI() {
   ui.playerStats.position.y = 0;
   ui.container.addChild(ui.playerStats);
 
-  var playerPic        = PIXI.Sprite.fromFrame("cheetah");
-  playerPic.position.x = 0;
-  playerPic.position.y = 0;
-  ui.playerStats.addChild(playerPic);
+  ui.playerPic            = PIXI.Sprite.fromFrame("cheetah");
+  ui.playerPic.position.x = 0;
+  ui.playerPic.position.y = 0;
+  ui.playerStats.addChild(ui.playerPic);
+
+  var barMargin = 5;
+
+  ui.healthBar = new PIXI.Graphics();
+  ui.healthBar.beginFill(0xff0000);
+  ui.healthBar.lineStyle(2, 0x000000);
+  ui.healthBar.drawRect(0,0, sizes.bar.x, sizes.bar.y);
+  ui.healthBar.position.x = barMargin + sizes.tile.x;
+  ui.healthBar.position.y = barMargin*2;
+  ui.playerStats.addChild(ui.healthBar);
+
+  ui.hungerBar = new PIXI.Graphics();
+  ui.hungerBar.beginFill(0x00ff00);
+  ui.hungerBar.lineStyle(2, 0x000000);
+  ui.hungerBar.drawRect(0,0, sizes.bar.x, sizes.bar.y);
+  ui.hungerBar.position.x = barMargin   + sizes.tile.x;
+  ui.hungerBar.position.y = barMargin*3 + sizes.bar.y;
+  ui.playerStats.addChild(ui.hungerBar);
+
+  ui.thirstBar = new PIXI.Graphics();
+  ui.thirstBar.beginFill(0x0000ff);
+  ui.thirstBar.lineStyle(2, 0x000000);
+  ui.thirstBar.drawRect(0,0, sizes.bar.x, sizes.bar.y);
+  ui.thirstBar.position.x = barMargin   + sizes.tile.x;
+  ui.thirstBar.position.y = barMargin*4 + sizes.bar.y*2;
+  ui.playerStats.addChild(ui.thirstBar);
   
 }
 
 function showMessage(msg) {
   ui.console.setText(msg);
 }
-
 
 function createRoom() {
   var room     = {};
