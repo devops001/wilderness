@@ -169,7 +169,8 @@ function createPlayer() {
   tiles.player.position.x = screenPos.x;
   tiles.player.position.y = screenPos.y;
 
-  tiles.player.data = {
+  tiles.player.state = {
+    "isAlive": true,
     "healthMax" : 100,
     "hungerMax" : 100,
     "thirstMax" : 100,
@@ -178,8 +179,8 @@ function createPlayer() {
     "thirst": 100,
     "turnsUntilHungryMax" : 10,
     "turnsUntilThirstyMax":  5,
-    "turnsUntilHungry"    : 10,
-    "turnsUntilThirsty"   :  5,
+    "turnsUntilHungry" : 10,
+    "turnsUntilThirsty":  5,
   };
 }
 
@@ -221,6 +222,8 @@ function move(sprite, dx, dy) {
 }
 
 function moveWorld(dx, dy) {
+  var ps = tiles.player.state;
+  if (!ps.isAlive) return;
   var tilePos = {"x":tiles.player.tilePos.x+dx, "y":tiles.player.tilePos.y+dy};
   if (!isBlocked(tilePos.x, tilePos.y)) {
     tiles.player.tilePos = tilePos;
@@ -230,7 +233,6 @@ function moveWorld(dx, dy) {
   }
   return false;
 }
-
 
 document.addEventListener('keydown', function(event) {
   if (event.keyCode==37||event.keyCode==65||event.keyCode==100) {
@@ -258,30 +260,51 @@ document.addEventListener('keydown', function(event) {
 
 function takeTurn() {
   state.takeTurn = false;
-  var pd = tiles.player.data;
+  var ps = tiles.player.state;
+  if (!ps.isAlive) return;
 
-  pd.turnsUntilHungry  -= 1;
-  pd.turnsUntilThirsty -= 1;
+  ps.turnsUntilHungry  -= 1;
+  ps.turnsUntilThirsty -= 1;
 
   var barChanges = {};
   var changeBars = false;
 
-  if (pd.turnsUntilHungry < 1) {
-    pd.hunger -= 1;
-    pd.turnsUntilHungry  = pd.turnsUntilHungryMax;
-    barChanges.hungerBar = pd.hunger * (sizes.bar.x/pd.hungerMax);
+  if (ps.turnsUntilHungry < 1) {
+    ps.turnsUntilHungry  = ps.turnsUntilHungryMax;
     changeBars           = true;
+    if (ps.hunger > 0) {
+      ps.hunger -= 1;
+      barChanges.hungerBar = ps.hunger * (sizes.bar.x/ps.hungerMax);
+    } else {
+      ps.health -= 1;
+      barChanges.healthBar = ps.health * (sizes.bar.x/ps.healthMax);
+      if (ps.health < 1) {
+        showMessage("you died of hunger :(");
+        ps.isAlive = false;
+      } 
+    }
   }
-  if (pd.turnsUntilThirsty < 1) {
-    pd.thirst -= 1;
-    pd.turnsUntilThirsty = pd.turnsUntilThirstyMax;
-    barChanges.thirstBar = pd.thirst * (sizes.bar.x/pd.thirstMax);
+
+  if (ps.turnsUntilThirsty < 1) {
+    ps.turnsUntilThirsty = ps.turnsUntilThirstyMax;
     changeBars           = true;
+    if (ps.thirst > 0) {
+      ps.thirst -= 1;
+      barChanges.thirstBar = ps.thirst * (sizes.bar.x/ps.thirstMax);
+    } else {
+      ps.health -= 1;
+      barChanges.healthBar = ps.health * (sizes.bar.x/ps.healthMax);
+      if (ps.health < 1) {
+        showMessage("you died of thirst :(");
+        ps.isAlive = false;
+      } 
+    }
   }
   if (changeBars) {
     updatePlayerBars(barChanges);
   }
 }
+
 
 function animate() {
   requestAnimationFrame(animate);
