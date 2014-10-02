@@ -58,20 +58,27 @@
     },
 
     "tree1": {
-	    "frame": {"x":0,"y":64,"w":64,"h":64},
+	    "frame": {"x":0,"y":128,"w":64,"h":64},
 	    "rotated": false,
 	    "trimmed": false,
 	    "spriteSourceSize": {"x":0,"y":0,"w":64,"h":64},
 	    "sourceSize": {"w":64,"h":64}
     },
     "tree2": {
-	    "frame": {"x":64,"y":64,"w":64,"h":64},
+	    "frame": {"x":64,"y":128,"w":64,"h":64},
+	    "rotated": false,
+	    "trimmed": false,
+	    "spriteSourceSize": {"x":0,"y":0,"w":64,"h":64},
+	    "sourceSize": {"w":64,"h":64}
+    },
+
+    "slot": {
+	    "frame": {"x":0,"y":192,"w":64,"h":64},
 	    "rotated": false,
 	    "trimmed": false,
 	    "spriteSourceSize": {"x":0,"y":0,"w":64,"h":64},
 	    "sourceSize": {"w":64,"h":64}
     }
-
 
   },
   "meta": {

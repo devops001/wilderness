@@ -20,9 +20,10 @@ renderer.view.style.display = "block";
 document.body.appendChild(renderer.view);
 
 var tiles    = {};
-tiles.names  = ["grass", "rock", "tree", "crate", "player", "rat", "skull", "cheetah", "tree1", "tree2"];
-tiles.rooms  = [];
+tiles.names  = ["grass", "rock", "tree", "crate", "player", "rat", "skull", "cheetah", "tree1", "tree2", "slot"];
 tiles.sprite = new PIXI.Sprite(new PIXI.RenderTexture(sizes.screen.x, sizes.screen.y));
+tiles.rooms  = [];
+tiles.trees  = [];
 
 var ui = {};
 
@@ -72,6 +73,22 @@ function createUI() {
   ui.thirstBar.position.x = barMargin   + sizes.tile.x;
   ui.thirstBar.position.y = barMargin*4 + sizes.bar.y*2;
   ui.playerStats.addChild(ui.thirstBar);
+
+  ui.actionBar = new PIXI.DisplayObjectContainer();
+  ui.actionBar.position.x = sizes.console.x + sizes.margin.x*2;
+  ui.actionBar.position.y = sizes.screen.y  - sizes.margin.y - sizes.tile.y;
+  ui.container.addChild(ui.actionBar);
+  ui.actionBar.buttons = [];
+ 
+  for (var x=0; x<4; x++) {
+    var button = PIXI.Sprite.fromFrame("slot"); 
+    button.anchor.x   = 0;
+    button.anchor.y   = 0;
+    button.position.x = 300 + (5 + sizes.tile.x) * x;
+    button.position.y = 0;
+    ui.actionBar.buttons.push(button);
+    ui.actionBar.addChild(button);
+  }
   
 }
 
