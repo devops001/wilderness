@@ -25,7 +25,8 @@ tiles.sprite = new PIXI.Sprite(new PIXI.RenderTexture(sizes.screen.x, sizes.scre
 tiles.rooms  = [];
 tiles.trees  = [];
 
-var ui = {};
+var ui    = {};
+var state = {"takeTurn":false};
 
 function createUI() {
   ui.height    = 50;
@@ -92,6 +93,27 @@ function createUI() {
   
 }
 
+function updatePlayerBars(changes) {
+  if (changes.healthBar) {
+    ui.healthBar.beginFill(0xffffff);
+    ui.healthBar.drawRect(0,0, sizes.bar.x, sizes.bar.y);
+    ui.healthBar.beginFill(0xff0000);
+    ui.healthBar.drawRect(0,0, changes.healthBar, sizes.bar.y);
+  }
+  if (changes.hungerBar) {
+    ui.hungerBar.beginFill(0xffffff);
+    ui.hungerBar.drawRect(0, 0, sizes.bar.x, sizes.bar.y);
+    ui.hungerBar.beginFill(0x00ff00);
+    ui.hungerBar.drawRect(0,0, changes.hungerBar, sizes.bar.y);
+  }
+  if (changes.thirstBar) {
+    ui.thirstBar.beginFill(0xffffff);
+    ui.thirstBar.drawRect(0, 0, sizes.bar.x, sizes.bar.y);
+    ui.thirstBar.beginFill(0x0000ff);
+    ui.thirstBar.drawRect(0,0, changes.thirstBar, sizes.bar.y);
+  }
+}
+
 function showMessage(msg) {
   ui.console.setText(msg);
 }
@@ -146,6 +168,19 @@ function createPlayer() {
   var screenPos           = getCenteredTilePos(x, y);
   tiles.player.position.x = screenPos.x;
   tiles.player.position.y = screenPos.y;
+
+  tiles.player.data = {
+    "healthMax" : 100,
+    "hungerMax" : 100,
+    "thirstMax" : 100,
+    "health": 100,
+    "hunger": 100,
+    "thirst": 100,
+    "turnsUntilHungryMax" : 10,
+    "turnsUntilThirstyMax":  5,
+    "turnsUntilHungry"    : 10,
+    "turnsUntilThirsty"   :  5,
+  };
 }
 
 function isBlocked(tileX, tileY) {
@@ -191,38 +226,68 @@ function moveWorld(dx, dy) {
     tiles.player.tilePos = tilePos;
     tiles.sprite.position.x -= dx * sizes.tile.x;
     tiles.sprite.position.y -= dy * sizes.tile.y;
+    return true;
   }
+  return false;
 }
 
 
-
 document.addEventListener('keydown', function(event) {
-  var player = tiles.player;
   if (event.keyCode==37||event.keyCode==65||event.keyCode==100) {
-    moveWorld(-1, 0);
+    state.takeTurn = moveWorld(-1, 0);
   } else if (event.keyCode==38||event.keyCode==87||event.keyCode==104) {
-    moveWorld(0, -1);
+    state.takeTurn = moveWorld(0, -1);
   } else if (event.keyCode==39||event.keyCode==68||event.keyCode==102) {
-    moveWorld(1, 0);
+    state.takeTurn = moveWorld(1, 0);
   } else if (event.keyCode==40||event.keyCode==83||event.keyCode==98) {
-    moveWorld(0, 1);
+    state.takeTurn = moveWorld(0, 1);
   } else if (event.keyCode==105) {
-    moveWorld(1, -1);
+    state.takeTurn = moveWorld(1, -1);
   } else if (event.keyCode==99) {
-    moveWorld(1, 1);
+    state.takeTurn = moveWorld(1, 1);
   } else if (event.keyCode==103) {
-    moveWorld(-1, -1);
+    state.takeTurn = moveWorld(-1, -1);
   } else if (event.keyCode==97) {
-    moveWorld(-1, 1);
+    state.takeTurn = moveWorld(-1, 1);
   } else if (event.keyCode==101) {
-    // rest
+    state.takeTurn = true;  
   } else {
     console.log("pressed: ", event.keyCode);
   }
 });
 
+function takeTurn() {
+  state.takeTurn = false;
+  var pd = tiles.player.data;
+
+  pd.turnsUntilHungry  -= 1;
+  pd.turnsUntilThirsty -= 1;
+
+  var barChanges = {};
+  var changeBars = false;
+
+  if (pd.turnsUntilHungry < 1) {
+    pd.hunger -= 1;
+    pd.turnsUntilHungry  = pd.turnsUntilHungryMax;
+    barChanges.hungerBar = pd.hunger * (sizes.bar.x/pd.hungerMax);
+    changeBars           = true;
+  }
+  if (pd.turnsUntilThirsty < 1) {
+    pd.thirst -= 1;
+    pd.turnsUntilThirsty = pd.turnsUntilThirstyMax;
+    barChanges.thirstBar = pd.thirst * (sizes.bar.x/pd.thirstMax);
+    changeBars           = true;
+  }
+  if (changeBars) {
+    updatePlayerBars(barChanges);
+  }
+}
+
 function animate() {
   requestAnimationFrame(animate);
+  if (state.takeTurn) {
+    takeTurn();
+  }
   renderer.render(stage);
 }
 
