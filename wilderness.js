@@ -23,9 +23,8 @@ var tiles    = {};
 tiles.names  = ["grass", "water", "tree", "crate", "player", "rat", "skull", "cheetah", "tree1", "tree2", "slot"];
 tiles.sprite = new PIXI.Sprite(new PIXI.RenderTexture(sizes.screen.x, sizes.screen.y));
 tiles.rooms  = [];
-tiles.items  = [];
 
-var ui    = {};
+var ui = {};
 
 function createUI() {
   ui.height    = 50;
@@ -92,25 +91,26 @@ function createUI() {
   
 }
 
-function updatePlayerBars(changes) {
-  if (changes.healthBar) {
-    ui.healthBar.beginFill(0xffffff);
-    ui.healthBar.drawRect(0,0, sizes.bar.x, sizes.bar.y);
-    ui.healthBar.beginFill(0xff0000);
-    ui.healthBar.drawRect(0,0, changes.healthBar, sizes.bar.y);
-  }
-  if (changes.hungerBar) {
-    ui.hungerBar.beginFill(0xffffff);
-    ui.hungerBar.drawRect(0, 0, sizes.bar.x, sizes.bar.y);
-    ui.hungerBar.beginFill(0x00ff00);
-    ui.hungerBar.drawRect(0,0, changes.hungerBar, sizes.bar.y);
-  }
-  if (changes.thirstBar) {
-    ui.thirstBar.beginFill(0xffffff);
-    ui.thirstBar.drawRect(0, 0, sizes.bar.x, sizes.bar.y);
-    ui.thirstBar.beginFill(0x0000ff);
-    ui.thirstBar.drawRect(0,0, changes.thirstBar, sizes.bar.y);
-  }
+function updatePlayerBars() {
+  var ps     = tiles.player.state;
+  var health = ps.health * (sizes.bar.x/ps.healthMax);
+  var hunger = ps.hunger * (sizes.bar.x/ps.hungerMax);
+  var thirst = ps.thirst * (sizes.bar.x/ps.thirstMax);
+
+  ui.healthBar.beginFill(0xffffff);
+  ui.healthBar.drawRect(0,0, sizes.bar.x, sizes.bar.y);
+  ui.healthBar.beginFill(0xff0000);
+  ui.healthBar.drawRect(0,0, health, sizes.bar.y);
+
+  ui.hungerBar.beginFill(0xffffff);
+  ui.hungerBar.drawRect(0, 0, sizes.bar.x, sizes.bar.y);
+  ui.hungerBar.beginFill(0x00ff00);
+  ui.hungerBar.drawRect(0,0, hunger, sizes.bar.y);
+  
+  ui.thirstBar.beginFill(0xffffff);
+  ui.thirstBar.drawRect(0, 0, sizes.bar.x, sizes.bar.y);
+  ui.thirstBar.beginFill(0x0000ff);
+  ui.thirstBar.drawRect(0,0, thirst, sizes.bar.y);
 }
 
 function showMessage(msg) {
@@ -122,10 +122,18 @@ function createRoom() {
   room.values  = [];
   room.texture = new PIXI.RenderTexture(sizes.map.x*sizes.tile.x, sizes.map.y*sizes.tile.y);
   // set tile values:
-  var grass = tiles.names.indexOf("grass");
+  var maxWater = 2;
+  var grass    = tiles.names.indexOf("grass");
+  var water    = tiles.names.indexOf("water");
   for (var y=0; y<sizes.map.y; y++) {
     for (var x=0; x<sizes.map.x; x++) {
-      room.values[x+y*sizes.map.x] = grass;
+      var index = x+y*sizes.map.x;
+      if (maxWater>0 && y>3 && Math.random()>0.99) {
+        maxWater--;
+        room.values[index] = water;
+      } else {
+        room.values[index] = grass;
+      }
     }
   }
   // create sprites:
@@ -192,6 +200,10 @@ function isBlocked(tileX, tileY) {
   return value != tiles.names.indexOf("grass");
 }
 
+function isTileType(tileName, tileX, tileY) {
+  return tiles.currentRoom.values[tileX+tileY*sizes.map.x] == tiles.names.indexOf(tileName);
+}
+
 function getCenteredTilePos(tileX, tileY) {
   var x = sizes.tile.x/2 + tileX*sizes.tile.x;
   var y = sizes.tile.y/2 + tileY*sizes.tile.y;
@@ -225,7 +237,13 @@ function moveWorld(dx, dy) {
   var ps = tiles.player.state;
   if (!ps.isAlive) return;
   var tilePos = {"x":tiles.player.tilePos.x+dx, "y":tiles.player.tilePos.y+dy};
-  if (!isBlocked(tilePos.x, tilePos.y)) {
+  if (isBlocked(tilePos.x, tilePos.y)) {
+    if (isTileType("water", tilePos.x, tilePos.y)) {
+      showMessage("you drink some water");
+      ps.thirst = ps.thirstMax;
+      updatePlayerBars();
+    }
+  } else {
     tiles.player.tilePos = tilePos;
     tiles.sprite.position.x -= dx * sizes.tile.x;
     tiles.sprite.position.y -= dy * sizes.tile.y;
@@ -267,7 +285,6 @@ function takeTurn() {
   ps.turnsUntilHungry  -= 1;
   ps.turnsUntilThirsty -= 1;
 
-  var barChanges = {};
   var changeBars = false;
 
   if (ps.turnsUntilHungry < 1) {
@@ -275,10 +292,8 @@ function takeTurn() {
     changeBars           = true;
     if (ps.hunger > 0) {
       ps.hunger -= 1;
-      barChanges.hungerBar = ps.hunger * (sizes.bar.x/ps.hungerMax);
     } else {
       ps.health -= 1;
-      barChanges.healthBar = ps.health * (sizes.bar.x/ps.healthMax);
       if (ps.health < 1) {
         showMessage("you died of hunger :(");
         ps.isAlive = false;
@@ -291,18 +306,17 @@ function takeTurn() {
     changeBars           = true;
     if (ps.thirst > 0) {
       ps.thirst -= 1;
-      barChanges.thirstBar = ps.thirst * (sizes.bar.x/ps.thirstMax);
     } else {
       ps.health -= 1;
-      barChanges.healthBar = ps.health * (sizes.bar.x/ps.healthMax);
       if (ps.health < 1) {
         showMessage("you died of thirst :(");
         ps.isAlive = false;
       } 
     }
   }
+
   if (changeBars) {
-    updatePlayerBars(barChanges);
+    updatePlayerBars();
   }
 }
 
