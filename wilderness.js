@@ -20,13 +20,12 @@ renderer.view.style.display = "block";
 document.body.appendChild(renderer.view);
 
 var tiles    = {};
-tiles.names  = ["grass", "rock", "tree", "crate", "player", "rat", "skull", "cheetah", "tree1", "tree2", "slot"];
+tiles.names  = ["grass", "water", "tree", "crate", "player", "rat", "skull", "cheetah", "tree1", "tree2", "slot"];
 tiles.sprite = new PIXI.Sprite(new PIXI.RenderTexture(sizes.screen.x, sizes.screen.y));
 tiles.rooms  = [];
-tiles.trees  = [];
+tiles.items  = [];
 
 var ui    = {};
-var state = {"takeTurn":false};
 
 function createUI() {
   ui.height    = 50;
@@ -170,7 +169,8 @@ function createPlayer() {
   tiles.player.position.y = screenPos.y;
 
   tiles.player.state = {
-    "isAlive": true,
+    "isAlive" : true,
+    "tookTurn": false,
     "healthMax" : 100,
     "hungerMax" : 100,
     "thirstMax" : 100,
@@ -235,31 +235,32 @@ function moveWorld(dx, dy) {
 }
 
 document.addEventListener('keydown', function(event) {
+  var player = tiles.player;
   if (event.keyCode==37||event.keyCode==65||event.keyCode==100) {
-    state.takeTurn = moveWorld(-1, 0);
+    player.state.tookTurn = moveWorld(-1, 0);
   } else if (event.keyCode==38||event.keyCode==87||event.keyCode==104) {
-    state.takeTurn = moveWorld(0, -1);
+    player.state.tookTurn = moveWorld(0, -1);
   } else if (event.keyCode==39||event.keyCode==68||event.keyCode==102) {
-    state.takeTurn = moveWorld(1, 0);
+    player.state.tookTurn = moveWorld(1, 0);
   } else if (event.keyCode==40||event.keyCode==83||event.keyCode==98) {
-    state.takeTurn = moveWorld(0, 1);
+    player.state.tookTurn = moveWorld(0, 1);
   } else if (event.keyCode==105) {
-    state.takeTurn = moveWorld(1, -1);
+    player.state.tookTurn = moveWorld(1, -1);
   } else if (event.keyCode==99) {
-    state.takeTurn = moveWorld(1, 1);
+    player.state.tookTurn = moveWorld(1, 1);
   } else if (event.keyCode==103) {
-    state.takeTurn = moveWorld(-1, -1);
+    player.state.tookTurn = moveWorld(-1, -1);
   } else if (event.keyCode==97) {
-    state.takeTurn = moveWorld(-1, 1);
+    player.state.tookTurn = moveWorld(-1, 1);
   } else if (event.keyCode==101) {
-    state.takeTurn = true;  
+    player.state.tookTurn = true;  
   } else {
     console.log("pressed: ", event.keyCode);
   }
 });
 
 function takeTurn() {
-  state.takeTurn = false;
+  tiles.player.state.tookTurn = false;
   var ps = tiles.player.state;
   if (!ps.isAlive) return;
 
@@ -308,7 +309,7 @@ function takeTurn() {
 
 function animate() {
   requestAnimationFrame(animate);
-  if (state.takeTurn) {
+  if (tiles.player.state.tookTurn) {
     takeTurn();
   }
   renderer.render(stage);
