@@ -256,6 +256,9 @@ function getCenteredTilePos(tileX, tileY) {
 }
 
 function attack(attacker, defender) {
+  if (!attacker.state.isAlive || !defender.state.isAlive) {
+    return;
+  }
   var amount = attacker.state.power;
   defender.state.health -= amount;
   showMessage(attacker.state.name +" attacked "+ defender.state.name +" for "+ amount);
@@ -292,8 +295,12 @@ function move(sprite, dx, dy) {
 function moveWorld(dx, dy) {
   var ps = tiles.player.state;
   if (!ps.isAlive) return;
+
   var tilePos = {"x":ps.tilePos.x+dx, "y":ps.tilePos.y+dy};
+  var blocked = false;
+
   if (isBlocked(tilePos.x, tilePos.y)) {
+    blocked = true;
     if (isTileType("water", tilePos.x, tilePos.y)) {
       showMessage("you drink some water");
       ps.thirst = ps.thirstMax;
@@ -301,11 +308,18 @@ function moveWorld(dx, dy) {
     } else {
       var mob = getMobAt(tilePos.x, tilePos.y);
       if (mob) {
-        attack(tiles.player, mob);
-        return true;
+        if (mob.state.isAlive) {
+          attack(tiles.player, mob);
+          return true;
+        } else {
+          blocked = false;
+        }
+      } else {
+        return false;
       }
     }
-  } else {
+  }
+  if (!blocked) {
     ps.tilePos = tilePos;
     var screenChange = {"x":dx*sizes.tile.x, "y":dy*sizes.tile.x};
     tiles.sprite.position.x -= screenChange.x;
