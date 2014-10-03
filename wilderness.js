@@ -1,7 +1,7 @@
 
 var sizes = {
   "screen" : {"x":window.innerWidth, "y":window.innerHeight},
-  "map"    : {"x":64,  "y":64},
+  "map"    : {"x":32,  "y":32},
   "tile"   : {"x":64,  "y":64},
   "view"   : {"x":0,   "y":0},
   "margin" : {"x":10,  "y":10},
@@ -88,7 +88,6 @@ function createUI() {
     ui.actionBar.buttons.push(button);
     ui.actionBar.addChild(button);
   }
-  
 }
 
 function updatePlayerBars() {
@@ -155,6 +154,28 @@ function createRoom() {
   tiles.rooms.push(room);
 }
 
+function createMobs(numMobs) {
+  tiles.currentRoom.mobs = [];
+  while (numMobs > 0) {
+    var x = Math.floor(Math.random()*sizes.map.x);
+    var y = Math.floor(Math.random()*sizes.map.y);
+    if (!isBlocked(x, y)) {
+      numMobs--;
+      var mob        = PIXI.Sprite.fromFrame("rat");
+      var centered   = getCenteredTilePos(x, y);
+      mob.anchor.x   = 0.5;
+      mob.anchor.y   = 0.5;
+      mob.position.x = centered.x;
+      mob.position.y = centered.y;
+      tiles.currentRoom.mobs.push(mob);
+      stage.addChild(mob);
+      mob.state         = {};
+      mob.state.name    = "mob"+numMobs;
+      mob.state.tilePos = {"x":x, "y":y};
+    }
+  }
+}
+
 function createRooms() {
   createRoom();
   tiles.currentRoom = tiles.rooms[0];
@@ -169,14 +190,14 @@ function createPlayer() {
   tiles.player.anchor.x = 0.5;
   tiles.player.anchor.y = 0.5;
   stage.addChild(tiles.player);
-  var x = Math.floor(sizes.view.x/2);
-  var y = Math.floor(sizes.view.y/2);
-  tiles.player.tilePos    = {"x":x, "y":y};
-  var screenPos           = getCenteredTilePos(x, y);
+  var tileX = Math.floor(sizes.view.x/2);
+  var tileY = Math.floor(sizes.view.y/2);
+  var screenPos           = getCenteredTilePos(tileX, tileY);
   tiles.player.position.x = screenPos.x;
   tiles.player.position.y = screenPos.y;
 
   tiles.player.state = {
+    "tilePos": {"x":tileX, "y":tileY},
     "isAlive" : true,
     "tookTurn": false,
     "healthMax" : 100,
@@ -205,38 +226,28 @@ function isTileType(tileName, tileX, tileY) {
 }
 
 function getCenteredTilePos(tileX, tileY) {
-  var x = sizes.tile.x/2 + tileX*sizes.tile.x;
-  var y = sizes.tile.y/2 + tileY*sizes.tile.y;
+  var x = tiles.sprite.position.x + (sizes.tile.x/2 + tileX*sizes.tile.x);
+  var y = tiles.sprite.position.y + (sizes.tile.y/2 + tileY*sizes.tile.y);
   return {"x":x, "y":y};
-}
-
-function getTilePos(screenX, screenY) {
-  var x = ((screenX - sizes.tile.x/2) / sizes.tile.x);
-  var y = ((screenY - sizes.tile.y/2) / sizes.tile.y);
-  return {"x":x, "y":y};
-}
-
-function getCenteredMapStartPosition() {
-  var posX = sizes.map.x /2;
-  var posY = sizes.map.y /2;
-  return {"x":posX, "y":posY};
 }
 
 function move(sprite, dx, dy) {
-  var tilePos = getTilePos(sprite.position.x, sprite.position.y);
-  var x       = tilePos.x + dx; 
-  var y       = tilePos.y + dy; 
+  var tp = sprite.state.tilePos;
+  var x  = tp.x + dx; 
+  var y  = tp.y + dy; 
   if (! (x<0 || y<0 || x>sizes.map.x-1 || y>sizes.map.y-1 || isBlocked(x,y))) {
     var centered      = getCenteredTilePos(x, y);
     sprite.position.x = centered.x;
     sprite.position.y = centered.y;
+    tp.x = x;
+    tp.y = y;
   }
 }
 
 function moveWorld(dx, dy) {
   var ps = tiles.player.state;
   if (!ps.isAlive) return;
-  var tilePos = {"x":tiles.player.tilePos.x+dx, "y":tiles.player.tilePos.y+dy};
+  var tilePos = {"x":ps.tilePos.x+dx, "y":ps.tilePos.y+dy};
   if (isBlocked(tilePos.x, tilePos.y)) {
     if (isTileType("water", tilePos.x, tilePos.y)) {
       showMessage("you drink some water");
@@ -244,9 +255,19 @@ function moveWorld(dx, dy) {
       updatePlayerBars();
     }
   } else {
-    tiles.player.tilePos = tilePos;
-    tiles.sprite.position.x -= dx * sizes.tile.x;
-    tiles.sprite.position.y -= dy * sizes.tile.y;
+    ps.tilePos = tilePos;
+    var screenChange = {"x":dx*sizes.tile.x, "y":dy*sizes.tile.x};
+    tiles.sprite.position.x -= screenChange.x;
+    tiles.sprite.position.y -= screenChange.y;
+    for (var i=0; i<tiles.currentRoom.mobs.length; i++) {
+      var mob = tiles.currentRoom.mobs[i];
+      var bx  = mob.position.x;
+      var by  = mob.position.y;
+      mob.position.x -= screenChange.x;
+      mob.position.y -= screenChange.y;
+      var ax = mob.position.x;
+      var ay = mob.position.y;
+    }
     return true;
   }
   return false;
@@ -278,6 +299,9 @@ document.addEventListener('keydown', function(event) {
 });
 
 function takeTurn() {
+ 
+  // update player stats:
+  
   tiles.player.state.tookTurn = false;
   var ps = tiles.player.state;
   if (!ps.isAlive) return;
@@ -318,6 +342,25 @@ function takeTurn() {
   if (changeBars) {
     updatePlayerBars();
   }
+
+  // update mobs:
+  for (var i=0; i<tiles.currentRoom.mobs.length; i++) {
+    var mob = tiles.currentRoom.mobs[i];
+    var dir = {"dx":0, "dy":0};
+    var num = Math.floor(Math.random()*9)+1;
+    switch (num) {
+      case 1: dir = {"dx":-1, "dy": 1}; break;
+      case 2: dir = {"dx": 0, "dy": 1}; break;
+      case 3: dir = {"dx": 1, "dy": 1}; break;
+      case 4: dir = {"dx":-1, "dy": 0}; break;
+      case 5: dir = {"dx": 0, "dy": 0}; break;
+      case 6: dir = {"dx": 1, "dy": 0}; break;
+      case 7: dir = {"dx":-1, "dy":-1}; break;
+      case 8: dir = {"dx": 0, "dy":-1}; break;
+      case 9: dir = {"dx": 1, "dy":-1}; break;
+    }
+    move(mob, dir.dx, dir.dy); 
+  }
 }
 
 
@@ -331,7 +374,9 @@ function animate() {
 
 var loader = new PIXI.AssetLoader(["tiles.json"]);
 loader.onComplete = function() {
+  // drawn in order (z position...):
   createRooms();
+  createMobs(5);
   createPlayer();
   createUI();
   animate();
