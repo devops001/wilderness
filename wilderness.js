@@ -169,9 +169,13 @@ function createMobs(numMobs) {
       mob.position.y = centered.y;
       tiles.currentRoom.mobs.push(mob);
       stage.addChild(mob);
-      mob.state         = {};
-      mob.state.name    = "mob"+numMobs;
-      mob.state.tilePos = {"x":x, "y":y};
+      mob.state = {
+        "isAlive" : true,
+        "name"    : "mob"+numMobs,
+        "tilePos" : {"x":x, "y":y},
+        "health"  : 10,
+        "power"   : 5,
+      };
     }
   }
 }
@@ -197,9 +201,11 @@ function createPlayer() {
   tiles.player.position.y = screenPos.y;
 
   tiles.player.state = {
+    "name"   : "player",
     "tilePos": {"x":tileX, "y":tileY},
     "isAlive" : true,
     "tookTurn": false,
+    "power": 5,
     "healthMax" : 100,
     "hungerMax" : 100,
     "thirstMax" : 100,
@@ -217,12 +223,30 @@ function isBlocked(tileX, tileY) {
   if (tileX<0 || tileY<0 || tileX>sizes.map.x-1 || tileY>sizes.map.y-1) {
     return true;
   }
-  var value = tiles.currentRoom.values[tileX+tileY*sizes.map.x];
-  return value != tiles.names.indexOf("grass");
+  if (tiles.currentRoom.values[tileX+tileY*sizes.map.x] != tiles.names.indexOf("grass")) {
+    return true;
+  }
+  if (tiles.player && tileX==tiles.player.state.tilePos.x && tileY==tiles.player.state.tilePos.y) {
+    return true;
+  }
+  if (getMobAt(tileX, tileY)) {
+    return true;
+  }
+  return false;
 }
 
 function isTileType(tileName, tileX, tileY) {
   return tiles.currentRoom.values[tileX+tileY*sizes.map.x] == tiles.names.indexOf(tileName);
+}
+
+function getMobAt(tileX, tileY) {
+  for (var i=0; i<tiles.currentRoom.mobs.length; i++) {
+    var mob = tiles.currentRoom.mobs[i];
+    if (tileX == mob.state.tilePos.x && tileY == mob.state.tilePos.y) {
+      return mob;
+    }
+  }
+  return null;
 }
 
 function getCenteredTilePos(tileX, tileY) {
@@ -231,11 +255,32 @@ function getCenteredTilePos(tileX, tileY) {
   return {"x":x, "y":y};
 }
 
+function attack(attacker, defender) {
+  var amount = attacker.state.power;
+  defender.state.health -= amount;
+  showMessage(attacker.state.name +" attacked "+ defender.state.name +" for "+ amount);
+  if (defender.state.health < 1) {
+    defender.state.isAlive = false;
+    showMessage(attacker.state.name +" killed "+ defender.state.name +"!");
+  }
+  if (defender.state.isPlayer) {
+    updatePlayerBars();
+  }
+}
+
 function move(sprite, dx, dy) {
   var tp = sprite.state.tilePos;
   var x  = tp.x + dx; 
   var y  = tp.y + dy; 
-  if (! (x<0 || y<0 || x>sizes.map.x-1 || y>sizes.map.y-1 || isBlocked(x,y))) {
+  if (x<0 || y<0 || x>sizes.map.x-1 || y>sizes.map.y-1) {
+    return;
+  }
+  if (isBlocked(x,y)) {
+    var mob = getMobAt(x,y);
+    if (mob && mob.state.isPlayer) {
+      attack(sprite, mob);
+    }
+  } else {
     var centered      = getCenteredTilePos(x, y);
     sprite.position.x = centered.x;
     sprite.position.y = centered.y;
@@ -253,6 +298,12 @@ function moveWorld(dx, dy) {
       showMessage("you drink some water");
       ps.thirst = ps.thirstMax;
       updatePlayerBars();
+    } else {
+      var mob = getMobAt(tilePos.x, tilePos.y);
+      if (mob) {
+        attack(tiles.player, mob);
+        return true;
+      }
     }
   } else {
     ps.tilePos = tilePos;
@@ -346,20 +397,22 @@ function takeTurn() {
   // update mobs:
   for (var i=0; i<tiles.currentRoom.mobs.length; i++) {
     var mob = tiles.currentRoom.mobs[i];
-    var dir = {"dx":0, "dy":0};
-    var num = Math.floor(Math.random()*9)+1;
-    switch (num) {
-      case 1: dir = {"dx":-1, "dy": 1}; break;
-      case 2: dir = {"dx": 0, "dy": 1}; break;
-      case 3: dir = {"dx": 1, "dy": 1}; break;
-      case 4: dir = {"dx":-1, "dy": 0}; break;
-      case 5: dir = {"dx": 0, "dy": 0}; break;
-      case 6: dir = {"dx": 1, "dy": 0}; break;
-      case 7: dir = {"dx":-1, "dy":-1}; break;
-      case 8: dir = {"dx": 0, "dy":-1}; break;
-      case 9: dir = {"dx": 1, "dy":-1}; break;
+    if (mob.state.isAlive) {
+      var dir = {"dx":0, "dy":0};
+      var num = Math.floor(Math.random()*9)+1;
+      switch (num) {
+        case 1: dir = {"dx":-1, "dy": 1}; break;
+        case 2: dir = {"dx": 0, "dy": 1}; break;
+        case 3: dir = {"dx": 1, "dy": 1}; break;
+        case 4: dir = {"dx":-1, "dy": 0}; break;
+        case 5: dir = {"dx": 0, "dy": 0}; break;
+        case 6: dir = {"dx": 1, "dy": 0}; break;
+        case 7: dir = {"dx":-1, "dy":-1}; break;
+        case 8: dir = {"dx": 0, "dy":-1}; break;
+        case 9: dir = {"dx": 1, "dy":-1}; break;
+      }
+      move(mob, dir.dx, dir.dy); 
     }
-    move(mob, dir.dx, dir.dy); 
   }
 }
 
