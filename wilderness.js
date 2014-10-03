@@ -264,6 +264,7 @@ function attack(attacker, defender) {
   showMessage(attacker.state.name +" attacked "+ defender.state.name +" for "+ amount);
   if (defender.state.health < 1) {
     defender.state.isAlive = false;
+    defender.setTexture(PIXI.Texture.fromFrame("skull"));
     showMessage(attacker.state.name +" killed "+ defender.state.name +"!");
   }
   if (defender.state.isPlayer) {
@@ -385,6 +386,7 @@ function takeTurn() {
       ps.health -= 1;
       if (ps.health < 1) {
         showMessage("you died of hunger :(");
+        tiles.player.setTexture(PIXI.Texture.fromFrame("skull"));
         ps.isAlive = false;
       } 
     }
@@ -398,6 +400,7 @@ function takeTurn() {
     } else {
       ps.health -= 1;
       if (ps.health < 1) {
+        tiles.player.setTexture(PIXI.Texture.fromFrame("skull"));
         showMessage("you died of thirst :(");
         ps.isAlive = false;
       } 
